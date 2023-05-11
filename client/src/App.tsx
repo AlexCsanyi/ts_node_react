@@ -1,36 +1,51 @@
 import { useEffect, useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
 import "./App.css";
+import Metrics from "./components/Metrics";
+import { fetchMetrics, fetchServerTime } from "./utilities/fetchers.utility";
 
 function App() {
-    const [data, setData] = useState(null);
+    const [serverTime, setServerTime] = useState(0);
+    const [metrics, setMetrics] = useState("");
+    const [counter, setCounter] = useState(0);
 
     useEffect(() => {
-        fetch("http://localhost:7000/time")
-            .then((res) => res.json())
-            .then((time) => setData(time.epoch));
+        fetchServerTime(setServerTime);
+        fetchMetrics(setMetrics);
+    }, []);
+
+    useEffect(() => {
+        const interval = setInterval(async () => {
+            fetchServerTime(setServerTime);
+            fetchMetrics(setMetrics);
+            setCounter(() => 0);
+        }, 30000);
+
+        return () => {
+            clearInterval(interval);
+        };
+    }, []);
+
+    useEffect(() => {
+        const interval = setInterval(
+            () => setCounter((prevCount) => prevCount + 1),
+            1000
+        );
+
+        return () => clearInterval(interval);
     }, []);
 
     return (
-        <>
-            <div>
-                <a href="https://vitejs.dev" target="_blank">
-                    <img src={viteLogo} className="logo" alt="Vite logo" />
-                </a>
-                <a href="https://react.dev" target="_blank">
-                    <img
-                        src={reactLogo}
-                        className="logo react"
-                        alt="React logo"
-                    />
-                </a>
+        <div id="hero">
+            <div id="card-1" className="card">
+                <p>Server time in epoch seconds: </p>
+                <p>{serverTime}</p>
+                <p>Time passed since last server time requested: </p>
+                <p>00:00:{("00" + counter).slice(-"00".length)}</p>
             </div>
-            <h1>Vite + React</h1>
-            <div className="card">
-                <p>{!data ? "Loading..." : data}</p>
+            <div id="card-2" className="card">
+                <Metrics metrics={metrics} />
             </div>
-        </>
+        </div>
     );
 }
 
